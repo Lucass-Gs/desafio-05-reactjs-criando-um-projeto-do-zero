@@ -1,11 +1,8 @@
-
-
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import { GetStaticPropsContext } from 'next';
 import { ParsedUrlQuery } from 'querystring';
-import { RouterContext } from 'next/dist/next-server/lib/router-context';
-
-import { getPrismicClient } from '../../services/prismic';
+import userEvent from '@testing-library/user-event';
+import { createClient } from '../../../prismicio';
 import App, { getStaticProps } from '../../pages';
 
 interface Post {
@@ -56,29 +53,37 @@ const mockedGetByTypeReturn = {
   ],
 };
 
-jest.mock('@prismicio/client');
+jest.mock('../../../prismicio');
 jest.mock('../../services/prismic');
 
-const mockedPrismic = getPrismicClient as jest.Mock;
+const mockedPrismic = createClient as jest.Mock;
 const mockedFetch = jest.spyOn(window, 'fetch') as jest.Mock;
 const mockedPush = jest.fn();
-let RouterWrapper;
+
+jest.mock('next/router', () => ({
+  useRouter() {
+    return {
+      route: '/',
+      pathname: '',
+      query: '',
+      asPath: '',
+      push: mockedPush,
+    };
+  },
+}));
+const mockedRouter = {
+  push: mockedPush,
+};
+jest.mock('next/router', () => ({
+  useRouter: jest.fn().mockImplementation(() => mockedRouter),
+}));
 
 describe('Home', () => {
   beforeAll(() => {
     mockedPush.mockImplementation(() => Promise.resolve());
-    const MockedRouterContext = RouterContext as React.Context<unknown>;
-    RouterWrapper = ({ children }): JSX.Element => {
-      return (
-        <MockedRouterContext.Provider
-          value={{
-            push: mockedPush,
-          }}
-        >
-          {children}
-        </MockedRouterContext.Provider>
-      );
-    };
+    jest.mock('next/router', () => ({
+      useRouter: jest.fn(),
+    }));
 
     mockedPrismic.mockReturnValue({
       getByType: () => {
@@ -127,7 +132,6 @@ describe('Home', () => {
       ])
     );
   });
-
   it('should be able to render posts documents info', () => {
     const postsPagination = mockedGetByTypeReturn;
 
@@ -149,27 +153,19 @@ describe('Home', () => {
   it('should be able to navigate to post page after a click', () => {
     const postsPagination = mockedGetByTypeReturn;
 
-    render(<App postsPagination={postsPagination} />, {
-      wrapper: RouterWrapper,
+    render(<App postsPagination={postsPagination} />);
+
+    const firstPostLink = screen.getByRole('link', {
+      name: /Como utilizar Hooks/i,
+    });
+    const secondPostLink = screen.getByRole('link', {
+      name: /Criando um app CRA do zero/i,
     });
 
-    const firstPostTitle = screen.getByText('Como utilizar Hooks');
-    const secondPostTitle = screen.getByText('Criando um app CRA do zero');
-
-    fireEvent.click(firstPostTitle);
-    fireEvent.click(secondPostTitle);
-
-    expect(mockedPush).toHaveBeenNthCalledWith(
-      1,
-      '/post/como-utilizar-hooks',
-      expect.anything(),
-      expect.anything()
-    );
-    expect(mockedPush).toHaveBeenNthCalledWith(
-      2,
-      '/post/criando-um-app-cra-do-zero',
-      expect.anything(),
-      expect.anything()
+    expect(firstPostLink).toHaveAttribute('href', '/post/como-utilizar-hooks');
+    expect(secondPostLink).toHaveAttribute(
+      'href',
+      '/post/criando-um-app-cra-do-zero'
     );
   });
 
@@ -192,7 +188,7 @@ describe('Home', () => {
     screen.getByText('Como utilizar Hooks');
     const loadMorePostsButton = screen.getByText('Carregar mais posts');
 
-    fireEvent.click(loadMorePostsButton);
+    userEvent.click(loadMorePostsButton);
 
     await waitFor(
       () => {

@@ -6,3 +6,8 @@
 // eslint-disable-next-line import/no-extraneous-dependencies
 import '@testing-library/jest-dom/extend-expect';
 import 'whatwg-fetch';
+
+jest.mock('next/router', () => ({
+  ...jest.requireActual('next/router'),
+  useRouter: jest.fn(),
+}));

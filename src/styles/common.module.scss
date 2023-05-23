@@ -1,1 +1,12 @@
-// TODO
+.container {
+    display: flex;
+    flex-direction: column;
+    max-width: 700px;    
+    margin: 0 auto;
+    padding: 0 2rem;
+
+    h4{                       
+        color: var(--highlight);
+        margin-top: 0.5rem;
+    }   
+}

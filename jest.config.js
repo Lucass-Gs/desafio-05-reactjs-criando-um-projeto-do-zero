@@ -140,7 +140,7 @@ module.exports = {
   // testEnvironment: "jest-environment-jsdom",
 
   // Options that will be passed to the testEnvironment
-  // testEnvironmentOptions: {},
+  testEnvironment: 'jsdom',
 
   // Adds a location field to test results
   // testLocationInResults: false,

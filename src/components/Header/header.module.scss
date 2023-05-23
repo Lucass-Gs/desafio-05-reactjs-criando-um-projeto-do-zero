@@ -1,1 +1,19 @@
-// TODO
+.headerContent {
+    display: flex;
+    align-items: center;    
+
+    img{        
+        height: 1.25rem;        
+    }
+    
+    h1{
+        font-size: 1.3rem;
+        color: var(--heading);
+        margin: 0 0.75rem;        
+    }
+
+    strong{
+        color: var(--highlight);
+        margin: 0 0.15rem;
+    }
+}
